@@ -1,6 +1,6 @@
 <template>
     <div class="uk-text-secondary" :style="[{ background: backgroundColor }]">
-        <router-link class="uk-text-emphasis" v-bind:to="video.url">
+        <router-link class="uk-text-emphasis" v-bind:to="this.getVideoUrl()">
             <div class="uk-position-relative">
                 <img
                     :height="height"
@@ -57,6 +57,19 @@ export default {
         height: String,
         width: String,
         hideChannel: Boolean,
+        isPlaylist: Boolean,
+        playlistIndex: Number,
     },
+    methods: {
+        getPlaylistId() {
+            return this.$route.query.list || this.$route.params.list;
+        },
+        getVideoUrl() {
+            if (this.isPlaylist) {
+                return `${this.video.url}&list=${this.getPlaylistId()}&index=${this.playlistIndex}`;
+            }
+            return this.video.url;
+        }
+    }
 };
 </script>

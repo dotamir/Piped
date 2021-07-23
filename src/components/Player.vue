@@ -28,6 +28,8 @@ export default {
         sponsors: Object,
         selectedAutoPlay: Boolean,
         selectedAutoLoop: Boolean,
+        autoPlaylist: Boolean,
+        playlist: Object,
     },
     data() {
         return {
@@ -134,6 +136,35 @@ export default {
                 });
 
                 videoEl.addEventListener("ended", () => {
+                    if (this.autoPlaylist && !!this.playlist.relatedStreams.length) {
+                        const params = this.$route.query;
+                        const currentIndex = Number(params.index);
+                        const nextIndex = currentIndex + 1;
+                        const relatedStreams = this.playlist.relatedStreams;
+                        if (nextIndex >= relatedStreams.length) { // Check playlist is over or not.
+                            return;
+                        }
+
+                        const nextVideoId = relatedStreams[nextIndex].url;
+                        let nextUrl = nextVideoId;
+                        const searchParams = new URLSearchParams();
+                        for (const param in params)
+                            switch (param) {
+                                case "v":
+                                case "t":
+                                    break;
+                                case "index":
+                                    searchParams.set(param, nextIndex);
+                                    break;
+                                default:
+                                    searchParams.set(param, params[param]);
+                                    break;
+                            }
+                        const paramStr = searchParams.toString();
+                        if (paramStr.length > 0) nextUrl += "&" + paramStr;
+                        this.$router.push(nextUrl)
+                        return;
+                    }
                     if (!this.selectedAutoLoop && this.selectedAutoPlay && this.video.relatedStreams.length > 0) {
                         const params = this.$route.query;
                         let url = this.video.relatedStreams[0].url;
@@ -150,6 +181,7 @@ export default {
                         const paramStr = searchParams.toString();
                         if (paramStr.length > 0) url += "&" + paramStr;
                         this.$router.push(url);
+                        return;
                     }
                 });
             }
@@ -220,6 +252,9 @@ export default {
                 });
                 videoEl.volume = this.getPreferenceNumber("volume", 1);
             });
+        },
+        getPlaylistId() {
+            return this.$route.query.list || this.$route.params.list;
         },
     },
     activated() {

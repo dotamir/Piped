@@ -3,13 +3,39 @@
         <ErrorHandler v-if="video && video.error" :message="video.message" :error="video.error" />
 
         <div v-show="!video.error">
-            <Player
-                ref="videoPlayer"
-                :video="video"
-                :sponsors="sponsors"
-                :selectedAutoPlay="selectedAutoPlay"
-                :selectedAutoLoop="selectedAutoLoop"
-            />
+            <div v-if="this.isPlaylist">
+                <div class="uk-grid uk-grid-match" uk-grid>
+                    <div class="uk-width-expand@m">
+                        <Player
+                            ref="videoPlayer"
+                            :video="video"
+                            :sponsors="sponsors"
+                            :selectedAutoPlay="selectedAutoPlay"
+                            :selectedAutoLoop="selectedAutoLoop"
+                            :autoPlaylist="isPlaylist"
+                            :playlist="playlist"
+                        />
+                    </div>
+                    <div style="overflow-y: scroll; height: 100%; max-height: 75vh; min-height: 250px;" class="uk-width-1-4@m uk-height-max-large">
+                        <div
+                            v-bind:key="video.url"
+                            v-for="(video, index) in this.playlist.relatedStreams"
+                        >
+                            <VideoItem :playlistIndex="index" :isPlaylist="isPlaylist" :video="video" height="60" width="60" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div v-else-if="!this.isPlaylist">
+                <Player
+                    ref="videoPlayer"
+                    :video="video"
+                    :sponsors="sponsors"
+                    :selectedAutoPlay="selectedAutoPlay"
+                    :selectedAutoLoop="selectedAutoLoop"
+                />
+            </div>
+
             <div class="uk-text-bold uk-margin-small-top uk-text-large uk-text-emphasis">{{ video.title }}</div>
 
             <div class="uk-flex uk-flex-middle">
@@ -119,6 +145,9 @@ export default {
             subscribed: false,
             channelId: null,
             active: true,
+            isPlaylist: false,
+            playlist: {},
+            currentPlaylistIndex: undefined,
         };
     },
     mounted() {
@@ -126,6 +155,8 @@ export default {
             if (this.active) this.$refs.videoPlayer.loadVideo();
         });
         this.getSponsors();
+        if (this.getPlaylistId()) this.isPlaylist = true;
+        if (this.isPlaylist) this.getPlaylistData()
         if (this.getPreferenceBoolean("comments", true)) this.getComments();
     },
     activated() {
@@ -241,6 +272,27 @@ export default {
         },
         getVideoId() {
             return this.$route.query.v || this.$route.params.v;
+        },
+        getPlaylistId() {
+            return this.$route.query.list || this.$route.params.list;
+        },
+        getIndex() {
+            return this.$route.query.index || undefined;
+        },
+        async fetchPlaylist() {
+            return await this.fetchJson(`${this.apiUrl()}/playlists/${this.getPlaylistId()}`)
+        },
+        async getPlaylistData() {
+            this.fetchPlaylist()
+                .then(data => {
+                    this.playlist = data
+                }).then(() => {
+                    const currentIndex = this.playlist.relatedStreams.findIndex(v => v.url.includes(this.getVideoId()));
+                    if (!this.getIndex()) {
+                        console.log(currentIndex, 'here')
+                        this.$router.push(`${this.$route.fullPath}&index=${currentIndex}`)
+                    }
+                })
         },
     },
     components: {
