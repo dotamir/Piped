@@ -1,5 +1,5 @@
 <template>
-    <div class="uk-text-secondary" :style="[{ background: backgroundColor }]">
+    <div class="uk-text-secondary" :style="[{ background: backgroundColor, border: this.isCurrentlyPlaying() ? '1px solid #c55' : '' }]">
         <router-link class="uk-text-emphasis" v-bind:to="this.getVideoUrl()">
             <div class="uk-position-relative">
                 <img
@@ -63,6 +63,10 @@ export default {
     methods: {
         getPlaylistId() {
             return this.$route.query.list || this.$route.params.list;
+        },
+        isCurrentlyPlaying() {
+            const index = this.$route.query.index || undefined;
+            return index && Number(index) === this.playlistIndex
         },
         getVideoUrl() {
             if (this.isPlaylist) {

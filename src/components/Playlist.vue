@@ -26,9 +26,9 @@
             <div
                 class="uk-width-1-2 uk-width-1-3@m uk-width-1-4@l uk-width-1-5@xl"
                 v-bind:key="video.url"
-                v-for="video in this.playlist.relatedStreams"
+                v-for="(video, index) in this.playlist.relatedStreams"
             >
-                <VideoItem :video="video" height="94" width="168" />
+                <VideoItem :isPlaylist="true" :playlistIndex="index" :video="video" height="94" width="168" />
             </div>
         </div>
     </div>
